@@ -40,22 +40,13 @@ export const DayRecords = ({date}:DayRecordsProps) => {
 
     const [ warning, setWarning ] = useState<SegmentError | null>(null)
     const [ deleteTargetId, setDeleteTargetId ] = useState<number | null>(null)
+    const [ editingId, setEditingId] = useState<number | null>(null)
+    const [ draft, setDraft ] = useState<{ startTime: number, endTime: number } | null>(null)
+    const [ highlightId, setHighlightId ] = useState<number | null>(null)
 
     const now = Date.now()
     const isToday = now >= dayStartMs && now < dayEndMs
 
-    const handleTimeChange = async (segment:FinishedSegment,field:TimeField,unit:TimeUnit,value:number) => {
-        const base = segment[field]
-
-        const currentHours = new Date(base).getHours()
-        const currentMinutes = new Date(base).getMinutes()
-
-        const newHours = unit === 'hours' ? value : currentHours
-        const newMinutes = unit === 'minutes' ? value : currentMinutes
-
-        const error = await updateSegment(segment.id,{ [field] :setTimeOfDay(base,newHours,newMinutes)})
-        if(error !== null) setWarning(error)
-    }
     const handleClientChange = (segmentId:number, clientId:number, currentClientId:number | undefined) => {
         if(clientId === currentClientId) return
         const clientProjects = projects.filter(p => p.clientId === clientId)
@@ -71,8 +62,6 @@ export const DayRecords = ({date}:DayRecordsProps) => {
     //案件が最低1つはあるクライアントの配列
     const clientsWithProjects = clients.filter(c => projects.some(p => p.clientId === c.id))
 
-    const newHours = currentSegment === null ? '' : String(new Date(currentSegment.startTime).getHours()).padStart(2, '0')
-    const newMinutes = currentSegment === null ? '' : String(new Date(currentSegment.startTime).getMinutes()).padStart(2, '0')
     const currentSegmentProject = projects.find(p => p.id === currentSegment?.projectId)
     const currentSegmentClient = clients.find(c => c.id === currentSegmentProject?.clientId)
 
@@ -86,7 +75,54 @@ export const DayRecords = ({date}:DayRecordsProps) => {
             setWarning('NO_FREE_SLOT')
             return 
         }
-        await addNewSegment(startTime, projectId)
+        const addedId = await addNewSegment(startTime, projectId)
+        setHighlightId(addedId)
+        setTimeout(() => setHighlightId(null), 1000)
+    }
+
+
+
+
+    // 編集開始：今の値を下書きにコピー
+    const handleEditStart = (segment: FinishedSegment) => {
+        setEditingId(segment.id)
+        setDraft({ startTime: segment.startTime, endTime: segment.endTime })
+    }
+
+    // 下書きの時・分を変更（updateSegmentは呼ばない）
+    const handleDraftChange = (field: TimeField, unit: TimeUnit, value: number) => {
+        setDraft(prev => {
+            if (prev === null) return prev
+            const base = prev[field]
+            const hours = unit === 'hours' ? value : new Date(base).getHours()
+            const minutes = unit === 'minutes' ? value : new Date(base).getMinutes()
+            return { ...prev, [field]: setTimeOfDay(base, hours, minutes) }
+        })
+    }
+
+    // 確定：ここで初めて検証・保存
+    const handleConfirm = async (segmentId: number) => {
+        if (draft === null) return
+        const error = await updateSegment(segmentId, draft)
+        if (error !== null) {
+            setWarning(error)   // 編集モードは維持して、直せるようにする
+            return
+        }
+        setEditingId(null)
+        setDraft(null)
+    }
+
+    // キャンセル
+    const handleCancel = () => {
+        setEditingId(null)
+        setDraft(null)
+    }
+
+    const formatClock = (time: number) => {
+        const date = new Date(time)
+        const hours = String(date.getHours()).padStart(2, '0')
+        const minutes = String(date.getMinutes()).padStart(2, '0')
+        return `${hours}:${minutes}`
     }
 
 
@@ -142,6 +178,7 @@ export const DayRecords = ({date}:DayRecordsProps) => {
                     <li className="start">開始</li>
                     <li className="separate"></li>
                     <li className="finish">終了</li>
+                    <li className="edit">編集</li>
                     <li className="client">クライアント</li>
                     <li className="project">案件</li>
                     <li className="delete">削除</li>
@@ -152,36 +189,66 @@ export const DayRecords = ({date}:DayRecordsProps) => {
                         const project = projects.find(project => project.id === segment.projectId)
                         const client = clients.find(client => project?.clientId === client.id)
                         const currentProjects = projects.filter(project => project.clientId === client?.id)
+
+                        const isEditing = segment.id === editingId && draft !== null
+                        const startTime = isEditing ? draft.startTime : segment.startTime
+                        const endTime = isEditing ? draft.endTime : segment.endTime
                         return (
-                            <li key={segment.id} className="item">
+                            <li key={segment.id} className={`item ${segment.id === highlightId ? 'is-added' : ''}`}>
                                 <span style={{background : `${project?.color}`}} className="color" />
+
                                 <div className="start">
-                                    <TimeDropdown
-                                        value={new Date(segment.startTime).getHours()}
-                                        options={HOURS}
-                                        onSelect={(n) => handleTimeChange(segment, 'startTime', 'hours', n)}
-                                    />
-                                    <span className="colon">:</span>
-                                    <TimeDropdown
-                                        value={new Date(segment.startTime).getMinutes()}
-                                        options={MINUTES}
-                                        onSelect={(n) => handleTimeChange(segment, 'startTime', 'minutes', n)}
-                                    />
+                                    {isEditing ? (
+                                        <>
+                                            <TimeDropdown 
+                                                value={new Date(startTime).getHours()} 
+                                                options={HOURS}
+                                                onSelect={(n) => handleDraftChange('startTime', 'hours', n)}
+                                             />
+                                            <span className="colon">:</span>
+                                            <TimeDropdown 
+                                                value={new Date(startTime).getMinutes()} 
+                                                options={MINUTES}
+                                                onSelect={(n) => handleDraftChange('startTime', 'minutes', n)}
+                                             />
+                                        </>
+                                    ) : (
+                                        <p className="default-time">{formatClock(startTime)}</p>
+                                    )}
                                 </div>
                                 <span className="separate">〜</span>
+
                                 <div className="finish">
-                                    <TimeDropdown
-                                        value={new Date(segment.endTime).getHours()}
-                                        options={HOURS}
-                                        onSelect={(n) => handleTimeChange(segment, 'endTime', 'hours', n)}
-                                    />
-                                    <span className="colon">:</span>
-                                    <TimeDropdown
-                                        value={new Date(segment.endTime).getMinutes()}
-                                        options={MINUTES}
-                                        onSelect={(n) => handleTimeChange(segment, 'endTime', 'minutes', n)}
-                                    />
+                                    {isEditing ? (
+                                        <>
+                                            <TimeDropdown 
+                                                value={new Date(endTime).getHours()} 
+                                                options={HOURS}
+                                                onSelect={(n) => handleDraftChange('endTime', 'hours', n)}
+                                             />
+                                            <span className="colon">:</span>
+                                            <TimeDropdown 
+                                                value={new Date(endTime).getMinutes()} 
+                                                options={MINUTES}
+                                                onSelect={(n) => handleDraftChange('endTime', 'minutes', n)}
+                                             />
+                                        </>
+                                    ) : (
+                                        <p className="default-time">{formatClock(endTime)}</p>
+                                    )}
                                 </div>
+
+                                <div className="edit">
+                                    {isEditing ? (
+                                        <>
+                                            <button className="btn" onClick={() => handleConfirm(segment.id)}><img src="./images/icon_confirm.svg" alt="" /></button>
+                                            <button className="btn" onClick={handleCancel}><img src="./images/icon_cancel.svg" alt="" /></button>
+                                        </>
+                                    ) : (
+                                        <button className="edit-btn" onClick={() => handleEditStart(segment)} disabled={editingId !== null}><img src="./images/icon_edit.svg" alt="" /></button>
+                                    )}
+                                </div>
+
                                 <div className="client c-select__outer">
                                     <SelectDropdown 
                                         value={client?.name} 
@@ -196,7 +263,7 @@ export const DayRecords = ({date}:DayRecordsProps) => {
                                         onSelect={(projectId) => handleProjectChange(segment.id,projectId)}
                                     />
                                 </div>
-                                <button className="delete" onClick={() => setDeleteTargetId(segment.id)}><img src="./images/icon_delete.svg" alt="" /></button>
+                                <button className="delete" onClick={() => setDeleteTargetId(segment.id)} disabled={editingId !== null}><img src="./images/icon_delete.svg" alt="" /></button>
                             </li>
                         )
                     })}
@@ -205,14 +272,13 @@ export const DayRecords = ({date}:DayRecordsProps) => {
                         <li className="item">
                             <span style={{background : `${currentSegmentProject?.color}`}} className="color" />
                             <div className="start">
-                                <p className='cs-time'>{newHours}</p>
-                                <span className="colon">:</span>
-                                <p className='cs-time'>{newMinutes}</p>
+                                <p className="default-time">{formatClock(currentSegment.startTime)}</p>
                             </div>
                             <span className="separate">〜</span>
                             <div className='tracking'>
                                 <p>tracking</p>
                             </div>
+                            <div className="edit"></div>
                             <div className="client">
                                 <p className='cs-name'>{currentSegmentClient?.name}</p>
                             </div>
@@ -224,7 +290,7 @@ export const DayRecords = ({date}:DayRecordsProps) => {
                     )}
                     
                 </ul>
-                <button className="p-today__details-add" onClick={handleAddSegment}><img src="./images/icon_plus.svg" alt="" />記録を追加</button>
+                <button className="p-today__details-add" onClick={handleAddSegment} disabled={editingId !== null}><img src="./images/icon_plus.svg" alt="" />記録を追加</button>
             </div>
             {warning !== null && (
                 <WarningPopup message={WARNING_MESSAGES[warning]} onClose={() => setWarning(null)} />
@@ -233,6 +299,7 @@ export const DayRecords = ({date}:DayRecordsProps) => {
                 <SegmentDeleteModal 
                     onConfirm={async () => {
                         await deleteSegment(deleteTargetId)
+                        if (deleteTargetId === editingId) { setEditingId(null); setDraft(null) }
                         setDeleteTargetId(null)
                     }}
                     onCancel={() => setDeleteTargetId(null)}

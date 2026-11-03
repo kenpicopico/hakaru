@@ -115,18 +115,22 @@
             .color{
                 width: 20px;
                 height: 100%;
-                margin-right: 20px;
+                margin-right: 15px;
                 display: block;
             }
             .start{
-                width: 76px;
+                width: 74px;
             }
             .separate{
-                width: 34px;
+                width: 24px;
             }
             .finish{
-                width: 76px;
-                margin-right: 20px;
+                width: 74px;
+                margin-right: 10px;
+            }
+            .edit{
+                width: 63px;
+                margin-right: 10px;
             }
             .client,.project{
                 width: 160px;
@@ -145,16 +149,19 @@
                 align-items: center;
                 justify-content: center;
                 border-bottom: 1px solid $selected-gray;
+                &.is-added{
+                    animation: added-flash 1s ease-out;
+                }
             }
             .color{
                 width: 20px;
                 height: 20px;
-                margin-right: 20px;
+                margin-right: 15px;
                 display: block;
                 border-radius: 10px;
             }
             .start{
-                width: 76px;
+                width: 74px;
                 display: flex;
                 align-items: center;
                 justify-content: space-between;
@@ -204,6 +211,19 @@
                         }
                     }
                 }
+                //確定済み（10:00）
+                .default-time{
+                    width: 74px;
+                    height: 30px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-family: "Roboto", sans-serif;
+                    font-size: 16px;
+                    color: $unselected-gray;
+                    letter-spacing: 0.1em;
+                }
+                //編集中（10）
                 .cs-time{
                     width: 32px;
                     height: 30px;
@@ -225,14 +245,14 @@
                 }
             }
             .separate{
-                width: 34px;
+                width: 24px;
                 text-align: center;
                 font-size: 14px;
                 color: $unselected-gray;
             }
             .finish{
-                width: 76px;
-                margin-right: 20px;
+                width: 74px;
+                margin-right: 10px;
                 display: flex;
                 align-items: center;
                 justify-content: space-between;
@@ -282,6 +302,17 @@
                         }
                     }
                 }
+                .default-time{
+                    width: 74px;
+                    height: 30px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-family: "Roboto", sans-serif;
+                    font-size: 16px;
+                    color: $unselected-gray;
+                    letter-spacing: 0.1em;
+                }
                 .colon{
                     text-align: center;
                     font-family: "Roboto", sans-serif;
@@ -289,19 +320,58 @@
                     color: $unselected-gray;
                 }
             }
+            .edit{
+                width: 63px;
+                margin-right: 10px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                column-gap: 7px;
+                .edit-btn{
+                    width: 30px;
+                    height: 30px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    border-radius: 4px;
+                    background: $selected-gray;
+                    &:disabled{
+                        opacity: 0.75;
+                        cursor: default;
+                        &:hover{
+                            opacity: 0.75;
+                        }
+                    }
+                    &:hover{
+                        opacity: 0.75;
+                    }
+                    img{
+                        width: 16px;
+                    }
+                }
+                .btn{
+                    width: 28px;
+                    height: 30px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    border-radius: 4px;
+                    background: $selected-gray;
+                    img{
+                        width: 16px;
+                    }
+                }
+            }
             .tracking{
-                width: 76px;
+                width: 74px;
                 height: 32px;
-                margin-right: 20px;
+                margin-right: 10px;
                 display: flex;
                 align-items: center;
                 justify-content: center;
                 font-family: "Roboto", sans-serif;
                 font-size: 16px;
                 color: $unselected-gray;
-                background: $content-main-bg;
-                border-radius: 4px;
-                border: 1px solid $selected-gray;
             }
             .client{
                 margin-right: 10px;
@@ -342,6 +412,16 @@
                 justify-content: center;
                 border-radius: 4px;
                 background: $selected-gray;
+                &:disabled{
+                    opacity: 0.75;
+                    cursor: default;
+                    &:hover{
+                        opacity: 0.75;
+                    }
+                }
+                &:hover{
+                    opacity: 0.75;
+                }
                 img{
                     width: 16px;
                 }
@@ -354,7 +434,8 @@
         &-add{
             width: 168px;
             height: 30px;
-            margin: 12px 0 0 14px;
+            margin: 12px 0 0 12px;
+            padding-bottom: 1px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -363,11 +444,60 @@
             color: $content-text;
             border-radius: 4px;
             background: $selected-gray;
+            &:disabled{
+                opacity: 0.75;
+                cursor: default;
+                &:hover{
+                    opacity: 0.75;
+                }
+            }
+            &:hover{
+                opacity: 0.75;
+            }
             img{
                 width: 18px;
             }
         }
     }
+    &__caution{
+        width: 460px;
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%,-50%);
+        border-radius: 8px;
+        background: $content-main-bg;
+        border: 1px solid $content-text;
+        z-index: 10;
+        &-inner{
+            width: 100%;
+            padding: 50px 0;
+            position: relative;
+            button{
+                width: 28px;
+                position: absolute;
+                top: 5px;
+                right: 5px;
+                &:hover{
+                    opacity: 0.75;
+                }
+            }
+            p{
+                text-align: center;
+                font-size: 16px;
+                line-height: 1.5;
+                color: $content-text;
+                .message{
+                    white-space: pre-line;
+                }
+            }
+        }
+    }
+}
+
+@keyframes added-flash {
+    from { background: rgba(255, 255, 255, 0.25); }
+    to   { background: transparent; }
 }
 
 //ProjectDetail.tsx

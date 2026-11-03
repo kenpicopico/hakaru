@@ -159,4 +159,5 @@ export const findFreeSlot = (todayStartMs:number, segments:FinishedSegment[], cu
 export const addNewSegment = async (startTime: number, projectId:number) => {
     const newSegment : FinishedSegment = { id : Date.now(), startTime : startTime, endTime : startTime + (60 * 1000), projectId : projectId, status : 'working'}
     await addSegment(newSegment)
+    return newSegment.id
 }
