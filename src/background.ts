@@ -1,4 +1,4 @@
-import { IDLE_THRESHOLD_SECONDS, AUTO_STOP_MINUTES, getCurrentSegment, finalizeCurrentSegment, type Segment, setSessionStartTime, setCurrentSegment } from "./utils/storage";
+import { getCurrentSegment, finalizeCurrentSegment, type Segment, setSessionStartTime, setCurrentSegment, getOpenOnStartup, getIdleMinutes, getAutoStopMinutes } from "./utils/storage";
 
 
 function openCustomWindow() {
@@ -10,11 +10,29 @@ function openCustomWindow() {
     });
 }
 
-chrome.idle.setDetectionInterval(IDLE_THRESHOLD_SECONDS)
+const applyIdleSetting = async () => {
+    const idleMinutes = await getIdleMinutes()
+    if(idleMinutes >= 1){
+        const idleSeconds = idleMinutes * 60
+        chrome.idle.setDetectionInterval(idleSeconds)
+    }
+}
+applyIdleSetting();
+
+chrome.storage.onChanged.addListener((changes) => {
+    if(changes.idleMinutes){
+        applyIdleSetting();
+    }
+})
 
 chrome.runtime.onInstalled.addListener(() => {
     openCustomWindow();
 });
+
+chrome.runtime.onStartup.addListener( async () => {
+    const openOnStartup = await getOpenOnStartup()
+    if(openOnStartup) openCustomWindow();
+})
 
 chrome.action.onClicked.addListener(() => {
     openCustomWindow();
@@ -28,7 +46,8 @@ chrome.idle.onStateChanged.addListener(async (newState) => {
         if(currentSegment === null){
             return
         }
-        let boundaryTime = Date.now() - (IDLE_THRESHOLD_SECONDS * 1000)
+        const idleMinutes = await getIdleMinutes()
+        let boundaryTime = Date.now() - (idleMinutes * 60 * 1000)
         if(boundaryTime < currentSegment.startTime){
             boundaryTime = currentSegment.startTime
         }
@@ -40,7 +59,10 @@ chrome.idle.onStateChanged.addListener(async (newState) => {
             status : 'idle'
         }
         await finalizeCurrentSegment(boundaryTime,nextCurrentSegment)
-        chrome.alarms.create('autoStopTracking', { delayInMinutes: AUTO_STOP_MINUTES })
+
+        const autoStopMinutes = await getAutoStopMinutes()
+        const delay = Math.max(1, autoStopMinutes - idleMinutes)
+        chrome.alarms.create('autoStopTracking', { delayInMinutes: delay })
 
     } else if(newState === 'active'){
         const currentSegment = await getCurrentSegment()

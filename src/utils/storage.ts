@@ -1,5 +1,3 @@
-export const IDLE_THRESHOLD_SECONDS = 600
-export const AUTO_STOP_MINUTES = 115
 
 export type Segment = {
     id : number
@@ -10,6 +8,36 @@ export type Segment = {
 }
 
 export type FinishedSegment = Segment & { endTime: number }
+
+export const getOpenOnStartup = async () => {
+    const result = await chrome.storage.local.get('openOnStartup')
+    const loaded = (result.openOnStartup ?? true) as boolean
+    return loaded
+}
+
+export const setOpenOnStartup = async (value : boolean) => {
+    await chrome.storage.local.set({ 'openOnStartup' : value})
+}
+
+export const getIdleMinutes = async () => {
+    const result = await chrome.storage.local.get('idleMinutes')
+    const loaded = (result.idleMinutes ?? 10) as number
+    return loaded
+}
+
+export const setIdleMinutes = async (value : number) => {
+    await chrome.storage.local.set({ 'idleMinutes' : value})
+}
+
+export const getAutoStopMinutes = async () => {
+    const result = await chrome.storage.local.get('autoStopMinutes')
+    const loaded = (result.autoStopMinutes ?? 120) as number
+    return loaded
+}
+
+export const setAutoStopMinutes = async (value : number) => {
+    await chrome.storage.local.set({ 'autoStopMinutes' : value})
+}
 
 export const getCurrentSegment = async () => {
     const result = await chrome.storage.local.get('currentSegment')
