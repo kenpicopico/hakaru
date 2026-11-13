@@ -1,6 +1,6 @@
 {
     "manifest_version": 3,
-    "name":"timer",
+    "name": "はかる - 案件ごとの作業時間を自動で記録",
     "version": "1.0",
     "icons": {
         "16": "images/icon-16.png",

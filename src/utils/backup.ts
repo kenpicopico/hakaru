@@ -20,7 +20,7 @@ export const downloadBackup = async () => {
     const url = URL.createObjectURL(blob)
     const d = new Date()
     const a = document.createElement('a')
-    const filename = `timer-backup-${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}.json`
+    const filename = `hakaru-backup-${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}.json`
     a.href = url
     a.download = filename
     a.click()
