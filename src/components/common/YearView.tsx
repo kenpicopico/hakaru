@@ -63,7 +63,7 @@ export const YearView = ({year, viewingProjectId}:YearViewProps) => {
                                 const { totalSeconds, workDays } = summarizeSegments(monthSegments)
                                 const average = totalSeconds === 0 ? '-' : formatHoursMinutes(totalSeconds / workDays)
                                 return (
-                                    <li className="table-item">
+                                    <li key={d.date} className="table-item">
                                         <div className="table-month">{d.date}</div>
                                         <div className="table-total">{time}</div>
                                         <div className="table-days">{workDays === 0 ? '-' : workDays}</div>
@@ -88,7 +88,7 @@ export const YearView = ({year, viewingProjectId}:YearViewProps) => {
                                 const { totalSeconds, workDays } = summarizeSegments(monthSegments)
                                 const average = totalSeconds === 0 ? '-' : formatHoursMinutes(totalSeconds / workDays)
                                 return (
-                                    <li className="table-item">
+                                    <li key={d.date} className="table-item">
                                         <div className="table-month">{d.date}</div>
                                         <div className="table-total">{time}</div>
                                         <div className="table-days">{workDays === 0 ? '-' : workDays}</div>

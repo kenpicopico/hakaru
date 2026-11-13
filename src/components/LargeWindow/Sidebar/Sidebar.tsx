@@ -116,15 +116,21 @@ export function Sidebar({activeTab,setActiveTab,viewingProjectId,setViewingProje
         }
     }
 
+    // リスナーは1回だけ登録し、クリック時は ref 経由で最新の確定処理を呼ぶ
+    const confirmClientRenameRef = useRef(handleConfirmClientRename)
+    useEffect(() => {
+        confirmClientRenameRef.current = handleConfirmClientRename
+    })
+
     useEffect(() => {
         const handleClientClickOutside = () => {
-            handleConfirmClientRename()
+            confirmClientRenameRef.current()
         }
         document.addEventListener('click',handleClientClickOutside)
         return () => {
             document.removeEventListener('click',handleClientClickOutside)
         }
-    },[editingClientId, newClientName])
+    },[])
 
     useEffect(() => {
         if( editingClientId !== null && clientInputRef.current){
@@ -148,15 +154,21 @@ export function Sidebar({activeTab,setActiveTab,viewingProjectId,setViewingProje
         }
     }
 
+    // リスナーは1回だけ登録し、クリック時は ref 経由で最新の確定処理を呼ぶ
+    const confirmProjectRenameRef = useRef(handleConfirmProjectRename)
+    useEffect(() => {
+        confirmProjectRenameRef.current = handleConfirmProjectRename
+    })
+
     useEffect(() => {
         const handleProjectClickOutside = () => {
-            handleConfirmProjectRename()
+            confirmProjectRenameRef.current()
         }
         document.addEventListener('click',handleProjectClickOutside)
         return () => {
             document.removeEventListener('click',handleProjectClickOutside)
         }
-    },[editingProjectId, newProjectName])
+    },[])
 
     useEffect(() => {
         if( editingProjectId !== null && projectInputRef.current){
@@ -353,8 +365,6 @@ export function Sidebar({activeTab,setActiveTab,viewingProjectId,setViewingProje
                     <img src="./images/icon_settings.svg" alt="" />
                     設定
                 </button>
-
-                {/* <button className="p-sidebar__login">ログイン</button> */}
             </div>
 
             { showWarning && (
