@@ -2,6 +2,7 @@
     "manifest_version": 3,
     "name": "はかる - 案件ごとの作業時間を自動で記録",
     "version": "1.0",
+    "description": "フリーランス・副業向けの作業時間トラッカー。ワンボタンで記録を開始、休憩の除外とストップは自動。案件ごとの作業時間をローカル保存で管理できます。",
     "icons": {
         "16": "images/icon-16.png",
         "32": "images/icon-32.png",
@@ -20,5 +21,5 @@
         "service_worker": "background.js",
         "type": "module"
     },
-    "permissions": ["storage", "windows", "idle", "alarms"]
+    "permissions": ["storage", "idle", "alarms"]
 }
