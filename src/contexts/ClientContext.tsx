@@ -15,7 +15,7 @@ export type ClientContextType = {
     changeClientColor: (id:number, color:string) => void
 }
 
-export const ClientContext = createContext<ClientContextType | undefined>(undefined)
+const ClientContext = createContext<ClientContextType | undefined>(undefined)
 
 export function useClientContext(){
     const context = useContext(ClientContext)

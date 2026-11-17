@@ -16,14 +16,19 @@ type SmallWindowProps = {
 export function SmallWindow({onExpand}:SmallWindowProps){
     const [ openDropdown, setOpenDropdown ] = useState<OpenDropdown>(null)
 
-    //選択中のクライアントのID
-    const [filterClientId, setFilterClientId] = useState<number>(1)
+    // ドロップダウンで手動で選んだクライアントのID（null なら選択中の案件のクライアントに合わせる）
+    const [manualClientId, setManualClientId] = useState<number | null>(null)
 
     const { clients } = useClientContext()
     const { projects } = useProjectContext()
     const { projectId, selectProject } = useSelectionContext()
     const { currentSegment, startTracking } = useTrackingContext()
     const { statusLabel, statusClass, buttonLabel, buttonIcon, buttonAction, showWarning, elapsedSeconds } = useTrackingDisplay()
+
+    const selectedProject = projects.find((project) => project.id === projectId)
+
+    //選択中のクライアントのID（state にせず、レンダー中に計算する）
+    const filterClientId = manualClientId ?? selectedProject?.clientId ?? 1
 
     //クライアントに紐づく案件の配列
     const filteredProjects = projects.filter((project) => project.clientId === filterClientId)
@@ -38,16 +43,6 @@ export function SmallWindow({onExpand}:SmallWindowProps){
     }
 
     const selectedClient = clients.find((client) => client.id === filterClientId)
-    const selectedProject = projects.find((project) => project.id === projectId)
-
-
-
-    useEffect(() => {
-        const currentProject = projects.find(project => project.id === projectId)
-        if(currentProject){
-            setFilterClientId(currentProject.clientId)
-        }
-    },[projectId])
 
     useEffect(() => {
         const handleClickOutside = () => {
@@ -79,10 +74,14 @@ export function SmallWindow({onExpand}:SmallWindowProps){
                                 key={client.id} 
                                 className={`c-select__option-item ${ client.id === filterClientId ? 'is-selected' : ''}`} 
                                 onClick={() => {
-                                    setFilterClientId(client.id)
                                     const firstProject = projects.find((project) => project.clientId === client.id)
                                     if(firstProject){
+                                        // 案件を選べば、クライアントは案件から自動で決まる
+                                        setManualClientId(null)
                                         selectProject(firstProject.id)
+                                    } else {
+                                        // 案件が1つもないクライアントは、手動の選択として覚えておく
+                                        setManualClientId(client.id)
                                     }
                             }}>
                                 {client.name}
@@ -102,6 +101,7 @@ export function SmallWindow({onExpand}:SmallWindowProps){
                                 key={filteredProject.id} 
                                 className={`c-select__option-item ${ filteredProject.id === projectId ? 'is-selected' : ''}`} 
                                 onClick={() => {
+                                    setManualClientId(null)
                                     selectProject(filteredProject.id)
                                     if(currentSegment !== null){
                                         startTracking(filteredProject.id)

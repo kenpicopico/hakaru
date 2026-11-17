@@ -6,7 +6,7 @@ export type SelectionContextType = {
     selectProject: (id:number) => void
 }
 
-export const SelectionContext = createContext<SelectionContextType | undefined>(undefined)
+const SelectionContext = createContext<SelectionContextType | undefined>(undefined)
 
 export function useSelectionContext(){
     const context = useContext(SelectionContext)
@@ -47,16 +47,16 @@ export function SelectionProvider({children}:SelectionProviderProps){
         setLocalProjectId()
     },[projectId, isLoaded])
 
-    useEffect(() => {
-        const exists = projects.find(project => project.id === projectId)
-        if(!exists){
-            if(projects.length === 0){
-                setProjectId(null)
-            } else {
-                setProjectId(projects[0].id)
-            }
+    // 案件一覧が変わったときだけ、選択中の案件がまだ存在するか確認する。
+    // useEffect ではなく「レンダー中に state を調整する」書き方にして、余分な再レンダーを防ぐ。
+    // projectId の変化では確認しない（案件の読み込み前に選択が null で上書き保存されてしまうため）
+    const [prevProjects, setPrevProjects] = useState(projects)
+    if(projects !== prevProjects){
+        setPrevProjects(projects)
+        if(!projects.some(project => project.id === projectId)){
+            setProjectId(projects.length === 0 ? null : projects[0].id)
         }
-    },[projects])
+    }
 
     return (
         <SelectionContext.Provider value={{projectId,selectProject}}>

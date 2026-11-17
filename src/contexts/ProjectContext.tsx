@@ -17,7 +17,7 @@ export type ProjectContextType = {
     updateProjectColor: (projectId:number, color:string) => void
 }
 
-export const ProjectContext = createContext<ProjectContextType | undefined>(undefined)
+const ProjectContext = createContext<ProjectContextType | undefined>(undefined)
 
 export function useProjectContext(){
     const context = useContext(ProjectContext)

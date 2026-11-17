@@ -35,7 +35,7 @@ export const DayRecords = ({date}:DayRecordsProps) => {
     const { projects } = useProjectContext()
     const { clients } = useClientContext()
     const { clientBreakdown } = useClientBreakdown(daySegments)
-    const { currentSegment } = useTrackingContext()
+    const { currentSegment, now } = useTrackingContext()
     const { projectId } = useSelectionContext()
 
     const [ warning, setWarning ] = useState<SegmentError | null>(null)
@@ -44,7 +44,8 @@ export const DayRecords = ({date}:DayRecordsProps) => {
     const [ draft, setDraft ] = useState<{ startTime: number, endTime: number } | null>(null)
     const [ highlightId, setHighlightId ] = useState<number | null>(null)
 
-    const now = Date.now()
+    // now は TrackingContext の現在時刻（計測中は1秒ごとに更新）を使う。
+    // isToday は「計測中の記録」の行を出すかどうかにしか使わないので、計測中に新しければ十分
     const isToday = now >= dayStartMs && now < dayEndMs
 
     const handleClientChange = (segmentId:number, clientId:number, currentClientId:number | undefined) => {

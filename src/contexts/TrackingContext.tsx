@@ -7,8 +7,10 @@ export type TrackingContextType = {
     stopTracking : () => void
     sessionStartTime : number | null
     elapsedSeconds : number
+    // 現在時刻（ms）。計測中は1秒ごとに更新される
+    now : number
 }
-export const TrackingContext = createContext<TrackingContextType | undefined>(undefined)
+const TrackingContext = createContext<TrackingContextType | undefined>(undefined)
 
 export function useTrackingContext(){
     const context = useContext(TrackingContext)
@@ -25,7 +27,7 @@ export type TrackingProviderProps = {
 export function TrackingProvider({children}:TrackingProviderProps){
     const [ currentSegment, setCurrentSegment] = useState<Segment | null>(null)
     const [ sessionStartTime, setSessionStartTime ] = useState<number | null>(null)
-    const [ elapsedSeconds, setElapsedSeconds] = useState<number>(0)
+    const [ now, setNow ] = useState<number>(() => Date.now())
 
     const startTracking = (projectId:number) => {
         chrome.runtime.sendMessage({
@@ -69,14 +71,11 @@ export function TrackingProvider({children}:TrackingProviderProps){
         loadSessionStartTime()
     },[])
 
+    // 計測中は1秒ごとに「現在時刻」だけを更新する
     useEffect(() => {
-        if( sessionStartTime === null){
-            setElapsedSeconds(0)
-            return
-        }
+        if( sessionStartTime === null) return
         const intervalId = setInterval(() => {
-            const seconds = Math.floor((Date.now() - sessionStartTime) / 1000)
-            setElapsedSeconds(seconds)
+            setNow(Date.now())
         },1000)
 
         return () => {
@@ -85,9 +84,15 @@ export function TrackingProvider({children}:TrackingProviderProps){
 
     },[sessionStartTime])
 
+    // 経過秒数は state にせず、開始時刻と現在時刻からレンダー中に計算する
+    // （計測していないときは 0。開始直後に now が古くてマイナスになる場合も 0 にする）
+    const elapsedSeconds = sessionStartTime === null
+        ? 0
+        : Math.max(0, Math.floor((now - sessionStartTime) / 1000))
+
 
     return (
-        <TrackingContext.Provider value={{currentSegment, startTracking, stopTracking, sessionStartTime, elapsedSeconds}}>
+        <TrackingContext.Provider value={{currentSegment, startTracking, stopTracking, sessionStartTime, elapsedSeconds, now}}>
         {children}
         </TrackingContext.Provider>
     )
