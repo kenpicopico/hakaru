@@ -14,7 +14,7 @@ export function DeleteConfirmModal({deleteTarget,setDeleteTarget,handleDeleteCli
         if(deleteTarget?.type === 'client'){
             handleDeleteClient(deleteTarget.id)
         } else if (deleteTarget?.type === 'project'){
-            deleteProject(deleteTarget.id)
+            deleteProject([deleteTarget.id])
         }
         setDeleteTarget(null)
     }

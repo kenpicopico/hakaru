@@ -1,5 +1,7 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import { COLOR_PALETTE } from '../utils/color'
+import { useSegments } from "../hooks/useSegments";
+import { deleteSegments } from "../utils/storage";
 
 export type Project = {
     id : number
@@ -12,7 +14,7 @@ export type ProjectContextType = {
     projects : Project[]
     addProject : (name:string,clientId:number,color:string) => void
     renameProject : (id:number,name:string) => void
-    deleteProject : (id:number) => void
+    deleteProject : (ids:number[]) => void
     changeProjectColor : (clientId:number, colors: readonly string[]) => void
     updateProjectColor: (projectId:number, color:string) => void
 }
@@ -34,6 +36,7 @@ export type ProjectProviderProps = {
 export function ProjectProvider({children}:ProjectProviderProps){
     const [projects, setProjects] = useState<Project[]>([])
     const [isLoaded, setIsLoaded] = useState<boolean>(false)
+    const segments = useSegments()
 
     const addProject = (name:string,clientId:number,color:string) => {
         const newId = Date.now()
@@ -47,8 +50,10 @@ export function ProjectProvider({children}:ProjectProviderProps){
         )) )
     }
 
-    const deleteProject = (id:number) => {
-        setProjects(prev => prev.filter(project => project.id !== id))
+    const deleteProject = (ids:number[]) => {
+        setProjects(prev => prev.filter(project => !ids.includes(project.id)))
+        const deleteSegmentsIds = segments.filter(segment => ids.includes(segment.projectId)).map(s => s.id)
+        deleteSegments(deleteSegmentsIds)
     }
 
     const changeProjectColor = (clientId:number, colors: readonly string[]) => {

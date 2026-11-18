@@ -25,10 +25,11 @@ export type DeleteTarget =
     | { type : 'project', id : number, name : string}
     | null
 
-type SidebarWarning = 'CLIENT_LIMIT' | 'PROJECT_LIMIT'
+type SidebarWarning = 'CLIENT_LIMIT' | 'PROJECT_LIMIT' | 'WARNING_TRACKING_ACTIVE_DELETE'
 const SIDEBAR_WARNING_MESSAGES: Record<SidebarWarning, string> = {
     CLIENT_LIMIT: '※クライアントは6件まで登録できます。',
     PROJECT_LIMIT: '※案件は1クライアントにつき8件まで登録できます。',
+    WARNING_TRACKING_ACTIVE_DELETE : '※削除を行う前にトラッキングを終了してください。'
 }
 
 export function Sidebar({activeTab,setActiveTab,viewingProjectId,setViewingProjectId}:SidebarProps){
@@ -178,10 +179,8 @@ export function Sidebar({activeTab,setActiveTab,viewingProjectId,setViewingProje
 
     //クライアント削除
     const handleDeleteClient = (id:number) => {
-        const targetProjects = projects.filter(project => project.clientId === id)
-        targetProjects.forEach(project => {
-            deleteProject(project.id)
-        })
+        const targetProjectsIds = projects.filter(project => project.clientId === id).map(p => p.id)
+        deleteProject(targetProjectsIds)
         deleteClient(id)
     }
 
@@ -264,7 +263,19 @@ export function Sidebar({activeTab,setActiveTab,viewingProjectId,setViewingProje
                                     <button className='c-tooltip' data-tooltip="名前の編集" onClick={(e) => handleStartEditClient(e,client.id,client.name)}>
                                         <img src="./images/icon_edit.svg" alt="" />
                                     </button>
-                                    <button className='c-tooltip' data-tooltip="削除" onClick={() => setDeleteTarget({ type : 'client', id : client.id, name : client.name})}><img src="./images/icon_delete_white.svg" alt="" /></button>
+                                    <button 
+                                        className='c-tooltip' 
+                                        data-tooltip="削除" 
+                                        onClick={() => {
+                                            // アイドル中も currentSegment に案件が残っているので、null のときだけ削除できる
+                                            if(currentSegment === null){
+                                                setDeleteTarget({ type : 'client', id : client.id, name : client.name})
+                                            } else {
+                                                setWarning('WARNING_TRACKING_ACTIVE_DELETE')
+                                            }
+                                        }}>
+                                        <img src="./images/icon_delete_white.svg" alt="" />
+                                    </button>
                                 </div>
                             </p>
                             <div className='p-sidebar__projects'>
@@ -323,7 +334,19 @@ export function Sidebar({activeTab,setActiveTab,viewingProjectId,setViewingProje
                                                         </button>
                                                     )}
                                                     <button className='c-tooltip' data-tooltip="名前の編集" onClick={(e) =>handleStartEditProject(e,clientProject.id,clientProject.name)}><img src="./images/icon_edit.svg" alt="" /></button>
-                                                    <button className='c-tooltip' data-tooltip="削除" onClick={() => setDeleteTarget({ type : 'project', id : clientProject.id, name : clientProject.name })}><img src="./images/icon_delete_white.svg" alt="" /></button>
+                                                    <button 
+                                                        className='c-tooltip' 
+                                                        data-tooltip="削除" 
+                                                        onClick={() => {
+                                                            // アイドル中も currentSegment に案件が残っているので、null のときだけ削除できる
+                                                            if(currentSegment === null){
+                                                                setDeleteTarget({ type : 'project', id : clientProject.id, name : clientProject.name })
+                                                            } else {
+                                                                setWarning('WARNING_TRACKING_ACTIVE_DELETE')
+                                                            }
+                                                        }}>
+                                                        <img src="./images/icon_delete_white.svg" alt="" />
+                                                    </button>
                                                 </div>
                                             </button>
                                             {openPaletteProjectId === clientProject.id && (

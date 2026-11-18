@@ -45,15 +45,19 @@ export const validateBackup = (json: unknown) => {
     if(!isValidProjects(data.projects)) return null
     if(!isValidSegments(data.segments)) return null
 
+    // 持ち主のいないデータは取り除いてから復元する
+    // （以前は案件を削除しても記録が残っていたため、古いバックアップには持ち主のいない記録が含まれることがある）
+    // クライアントがいない案件を取り除く
     const clientIds = new Set(data.clients.map(c => c.id))
-    if (!data.projects.every(p => clientIds.has(p.clientId))) return null
-    
-    const projectIds = new Set(data.projects.map(p => p.id))
-    if (!data.segments.every(s => projectIds.has(s.projectId))) return null
+    const projects = data.projects.filter(p => clientIds.has(p.clientId))
 
-    // selectedProjectId
+    // 案件がいない記録を取り除く（上で取り除いた案件の記録もここで一緒に消える）
+    const projectIds = new Set(projects.map(p => p.id))
+    const segments = data.segments.filter(s => projectIds.has(s.projectId))
+
+    // selectedProjectId が取り除いた案件を指していたら null にする（SelectionContext が先頭の案件を選び直す）
     const selected = data.selectedProjectId
-    if (selected !== undefined && selected !== null && !projectIds.has(selected as number)) return null
+    const selectedProjectId = typeof selected === 'number' && projectIds.has(selected) ? selected : null
 
     // idleMinutes（1〜60の整数）
     const idle = data.idleMinutes
@@ -73,9 +77,9 @@ export const validateBackup = (json: unknown) => {
 
     return {
         clients: data.clients,
-        projects: data.projects,
-        segments: data.segments,
-        selectedProjectId: data.selectedProjectId,
+        projects,
+        segments,
+        selectedProjectId,
         idleMinutes: data.idleMinutes,
         autoStopMinutes: data.autoStopMinutes,
         openOnStartup: data.openOnStartup,

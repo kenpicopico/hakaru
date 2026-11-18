@@ -10,7 +10,7 @@ import { TimeDropdown } from "../LargeWindow/ContentArea/tabs/TimeDropdown"
 import { SelectDropdown } from "../LargeWindow/ContentArea/tabs/SelectDropdown"
 import { WarningPopup } from "./WarningPopup"
 import { SegmentDeleteModal } from "../LargeWindow/ContentArea/tabs/SegmentDeleteModal/SegmentDeleteModal"
-import { updateSegment, deleteSegment, findFreeSlot, addNewSegment, type FinishedSegment, type SegmentError } from "../../utils/storage"
+import { updateSegment, deleteSegments, findFreeSlot, addNewSegment, type FinishedSegment, type SegmentError } from "../../utils/storage"
 
 const HOURS = Array.from({ length: 24 }, (_, i) => i)
 const MINUTES = Array.from({ length: 60}, (_, i) => i)
@@ -299,7 +299,7 @@ export const DayRecords = ({date}:DayRecordsProps) => {
             {deleteTargetId !== null && (
                 <SegmentDeleteModal 
                     onConfirm={async () => {
-                        await deleteSegment(deleteTargetId)
+                        await deleteSegments([deleteTargetId])
                         if (deleteTargetId === editingId) { setEditingId(null); setDraft(null) }
                         setDeleteTargetId(null)
                     }}

@@ -156,9 +156,9 @@ export const updateSegment = async (id: number, changes: Partial<FinishedSegment
 
 }
 
-export const deleteSegment = async (id:number) => {
+export const deleteSegments = async (ids:number[]) => {
     const segments = await getSegments()
-    const newSegments = segments.filter(segment => segment.id !== id)
+    const newSegments = segments.filter(segment => !ids.includes(segment.id))
     await chrome.storage.local.set({'segments':newSegments})
 }
 
